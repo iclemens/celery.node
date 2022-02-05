@@ -1,9 +1,11 @@
 import Base from "./base";
 import { Message } from "../kombu/message";
+import { Heartbeat } from "./heartbeat";
 
 export default class Worker extends Base {
   handlers: object = {};
   activeTasks: Set<Promise<any>> = new Set();
+  heartbeat: Heartbeat = undefined;
 
   /**
    * Register task handler on worker handlers
@@ -39,9 +41,14 @@ export default class Worker extends Base {
    * worker.register('tasks.add', (a, b) => a + b);
    * worker.start();
    */
-  public start(): Promise<any> {
+  public start(hostname?: string): Promise<any> {
     console.info("celery.node worker starting...");
     console.info(`registered task: ${Object.keys(this.handlers)}`);
+
+    this.broker.isReady().then(() => {
+      if (!this.heartbeat)
+        this.heartbeat = new Heartbeat(this.broker, hostname);
+    });
     return this.run().catch(err => console.error(err));
   }
 
@@ -144,18 +151,18 @@ export default class Worker extends Base {
 
       const timeStart = process.hrtime();
       const taskPromise = handler(...args, kwargs).then(result => {
-        const diff = process.hrtime(timeStart);
-        console.info(
-          `celery.node Task ${taskName}[${taskId}] succeeded in ${diff[0] +
-            diff[1] / 1e9}s: ${result}`
-        );
-        this.backend.storeResult(taskId, result, "SUCCESS");
-        this.activeTasks.delete(taskPromise);
-      }).catch(err => {
-        console.info(`celery.node Task ${taskName}[${taskId}] failed: [${err}]`);
-        this.backend.storeResult(taskId, err, "FAILURE");
-        this.activeTasks.delete(taskPromise);
-      });
+          const diff = process.hrtime(timeStart);
+          console.info(
+            `celery.node Task ${taskName}[${taskId}] succeeded in ${diff[0] +
+              diff[1] / 1e9}s: ${result}`
+          );
+          this.backend.storeResult(taskId, result, "SUCCESS");
+          this.activeTasks.delete(taskPromise);
+        }).catch(err => {
+          console.info(`celery.node Task ${taskName}[${taskId}] failed: [${err}]`);
+          this.backend.storeResult(taskId, err, "FAILURE");
+          this.activeTasks.delete(taskPromise);
+        });
 
       // record the executing task
       this.activeTasks.add(taskPromise);
