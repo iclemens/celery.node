@@ -1,4 +1,5 @@
 import { CeleryBroker } from "../kombu/brokers";
+import * as os from 'os';
 
 export class Heartbeat {
   private exchange = "celeryev";
@@ -9,13 +10,17 @@ export class Heartbeat {
 
   constructor(
     private broker: CeleryBroker,
-    private hostname,
+    private hostname?: string,
     private freq = 2.0
   ) {
+    if (!this.hostname) {
+      this.hostname = os.hostname();
+    }
+
     this.sendEvent("worker-online");
     this.handle = setInterval(() => {
       this.sendEvent("worker-heartbeat");
-    }, freq);
+    }, freq * 1000.0);
   }
 
   public stop() {

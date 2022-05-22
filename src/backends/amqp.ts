@@ -2,7 +2,7 @@ import * as amqplib from "amqplib";
 import { CeleryBackend } from ".";
 
 export default class AMQPBackend implements CeleryBackend {
-  opts: { [ key:string ]: any };
+  opts: { [key: string]: any };
   connect: Promise<amqplib.Connection>;
   channel: Promise<amqplib.Channel>;
 
@@ -75,19 +75,18 @@ export default class AMQPBackend implements CeleryBackend {
           .then(() => Promise.resolve(ch))
       )
       .then(ch =>
-
         ch.publish(
           "",
           queue,
           Buffer.from(
-              JSON.stringify({
-                status: state,
-                result: state == 'FAILURE' ? null : result,
-                traceback: null,
-                children: [],
-                task_id: taskId,
-                date_done: new Date().toISOString()
-              })
+            JSON.stringify({
+              status: state,
+              result: state == "FAILURE" ? null : result,
+              traceback: null,
+              children: [],
+              task_id: taskId,
+              date_done: new Date().toISOString()
+            })
           ),
           {
             contentType: "application/json",

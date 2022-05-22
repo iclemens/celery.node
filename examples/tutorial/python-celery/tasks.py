@@ -2,7 +2,7 @@ from celery import Celery
 
 celery = Celery('tasks', 
     broker='amqp://',
-    backend='amqp://'
+    backend='rpc://'
 )
 
 @celery.task(name='tasks.add')

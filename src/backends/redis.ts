@@ -100,7 +100,7 @@ export default class RedisBackend implements CeleryBackend {
       `${keyPrefix}${taskId}`,
       JSON.stringify({
         status: state,
-        result: state == 'FAILURE' ? null : result,
+        result: state == "FAILURE" ? null : result,
         traceback: result,
         children: [],
         task_id: taskId,

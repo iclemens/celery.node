@@ -55,8 +55,8 @@ export default class AMQPBroker implements CeleryBroker {
             arguments: null
           })
         ])
-        .then(() => resolve())
-        .catch(reject);
+          .then(() => resolve())
+          .catch(reject);
       });
     });
   }

@@ -75,7 +75,7 @@ describe("celery functional tests", () => {
 
     describe("when the the result has previously resolved", () => {
       it("should immediately resolve when the task was previously resolved", done => {
-        const getTaskMetaSpy = sinon.spy(client.backend, 'getTaskMeta');
+        const getTaskMetaSpy = sinon.spy(client.backend, "getTaskMeta");
 
         const result = client.createTask("tasks.add").applyAsync([1, 2]);
 
@@ -109,7 +109,7 @@ describe("celery functional tests", () => {
         .catch(error => {
           assert.strictEqual(error.message, "TIMEOUT");
           done();
-        })
+        });
     });
   });
 });

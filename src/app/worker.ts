@@ -1,11 +1,13 @@
 import Base from "./base";
 import { Message } from "../kombu/message";
 import { Heartbeat } from "./heartbeat";
+import { Control } from "./control";
 
 export default class Worker extends Base {
   handlers: object = {};
   activeTasks: Set<Promise<any>> = new Set();
   heartbeat: Heartbeat = undefined;
+  control: Control = undefined;
 
   /**
    * Register task handler on worker handlers
@@ -42,13 +44,35 @@ export default class Worker extends Base {
    * worker.start();
    */
   public start(hostname?: string): Promise<any> {
+    const pidboxQueue = `${hostname}.celery.pidbox`;
     console.info("celery.node worker starting...");
     console.info(`registered task: ${Object.keys(this.handlers)}`);
 
     this.broker.isReady().then(() => {
+      (this.broker as any).channel.then(async (ch) => {
+        await ch.assertQueue(pidboxQueue);
+        await ch.bindQueue(pidboxQueue, 'celery.pidbox');
+        this.control = new Control(this.broker);
+
+        this.broker.subscribe(pidboxQueue, (msg) => {
+          try {
+            const message = JSON.parse(msg.body);
+
+            if (!message.destination || !message.destination.includes(hostname)) {
+              this.control.handleMessage(message);
+              return;
+            }
+            
+            this.control.handleMessage(message);
+          } catch (err) {
+          }
+        });
+      });
+      
       if (!this.heartbeat)
-        this.heartbeat = new Heartbeat(this.broker, hostname);
+        this.heartbeat = new Heartbeat(this.broker, hostname);        
     });
+
     return this.run().catch(err => console.error(err));
   }
 

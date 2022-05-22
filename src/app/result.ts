@@ -3,13 +3,13 @@ import { CeleryBackend } from "../backends";
 const isFinalStatus = {
   SUCCESS: true,
   FAILURE: true,
-  REVOKED: true,
-}
+  REVOKED: true
+};
 const isErrorStatus = {
   TIMEOUT: true,
   FAILURE: true,
-  REVOKED: true,
-}
+  REVOKED: true
+};
 
 function createError(message: string, data: object): Error {
   const error = new Error(message);
@@ -46,7 +46,7 @@ export class AsyncResult {
       if (timeout) {
         timeoutId = setTimeout(() => {
           clearInterval(intervalId);
-          resolve({status: "TIMEOUT", result: {}});
+          resolve({ status: "TIMEOUT", result: {} });
         }, timeout);
       }
 
@@ -64,11 +64,11 @@ export class AsyncResult {
     };
 
     if (!this._cache) {
-      this._cache = new Promise<object>((resolve) => {
+      this._cache = new Promise<object>(resolve => {
         waitFor(resolve);
       });
     } else {
-      const p = new Promise<object>((resolve) => {
+      const p = new Promise<object>(resolve => {
         this._cache.then(meta => {
           if (meta && isFinalStatus[meta["status"]]) {
             resolve(meta);
@@ -77,11 +77,11 @@ export class AsyncResult {
           }
         });
       });
-      
+
       this._cache = p;
     }
 
-    return this._cache.then((meta) => {
+    return this._cache.then(meta => {
       if (isErrorStatus[meta["status"]]) {
         throw createError(meta["status"], meta["result"]);
       } else {
@@ -92,20 +92,18 @@ export class AsyncResult {
 
   private getTaskMeta(): Promise<object> {
     if (!this._cache) {
-      this._cache = new Promise<object>((resolve) => {
-        this.backend.getTaskMeta(this.taskId)
-          .then(resolve);
+      this._cache = new Promise<object>(resolve => {
+        this.backend.getTaskMeta(this.taskId).then(resolve);
       });
     } else {
-      const p = new Promise<object>((resolve) => {
+      const p = new Promise<object>(resolve => {
         this._cache.then(meta => {
-            if (meta && isFinalStatus[meta["status"]]) {
-              resolve(meta);
-            } else {
-              this.backend.getTaskMeta(this.taskId)
-                .then(resolve);
-            }
-          })
+          if (meta && isFinalStatus[meta["status"]]) {
+            resolve(meta);
+          } else {
+            this.backend.getTaskMeta(this.taskId).then(resolve);
+          }
+        });
       });
       this._cache = p;
     }
@@ -114,24 +112,22 @@ export class AsyncResult {
   }
 
   public result(): Promise<any> {
-    return this.getTaskMeta()
-      .then((meta) => {
-        if (meta) {
-          return meta["result"];
-        } else {
-          return null;
-        }
-      });
+    return this.getTaskMeta().then(meta => {
+      if (meta) {
+        return meta["result"];
+      } else {
+        return null;
+      }
+    });
   }
 
   public status(): Promise<string> {
-    return this.getTaskMeta()
-      .then((meta) => {
-        if (meta) {
-          return meta["status"];
-        } else {
-          return null;
-        }
-      });
+    return this.getTaskMeta().then(meta => {
+      if (meta) {
+        return meta["status"];
+      } else {
+        return null;
+      }
+    });
   }
 }

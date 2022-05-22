@@ -126,7 +126,7 @@ export default class Client extends Base {
   /**
    * get AsyncResult by task id
    * @param {string} taskId for task identification.
-   * @returns {AsyncResult} 
+   * @returns {AsyncResult}
    */
   public asyncResult(taskId: string): AsyncResult {
     return new AsyncResult(taskId, this.backend);
